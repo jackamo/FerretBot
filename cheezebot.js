@@ -107,7 +107,7 @@ var commands = [
 		pattern: /^now/,
 		reply: function(match) {
 			var date = new Date();
-			return date.toDateString() + " - " + date.toTimeString()
+			return date.toDateString() + " - " + date.toTimeString();
 		}
 	},
 	{
@@ -229,6 +229,13 @@ var commands = [
 				}
 				else console.log("Error requesting weather information: " + (error || response) + "\n");
 			});
+		}
+	},
+	{
+		description: "about:\t\t\t\tdeveloper and source info",
+		pattern: /^about/,
+		reply: function() {
+			return "CheezeBot by Adam-G\nSource: https://github.com/akg1852/CheezeBot\nSuggestions or contributions welcome.";
 		}
 	},
 ];
