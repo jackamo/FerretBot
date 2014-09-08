@@ -71,18 +71,22 @@ function post(reply, data) {
 // timer data
 var timers = [];
 
+
 /* commands:
-   each command requires
-	 * a description (for the help listing)
-	 * a regex pattern to trigger the command
-	 * a reply method which returns CheezeBot's reply (or null for no reply)
-	   (alternately, reply can call the "post" method directly, which is useful inside a callback)
+each command requires:
+	* a 'description' for the help listing
+	* a regex 'pattern' to trigger the command
+	* a 'reply' method which takes parameters:
+		* the regex 'match' array
+		* the flowdock stream 'data' object
+	  the 'reply' method returns CheezeBot's reply (or null for no reply)
+	  (alternatively, 'reply' can call the 'post' method directly, which is useful inside a callback)
 */
 var commands = [
 	{
 		description: "help:\t\t\t\tdisplay this message",
 		pattern: /^help/,
-		reply: function(match) {
+		reply: function() {
 			var help = "CheezeBot commands:";
 			for (var i = 0; i < commands.length; i++) {
 				var command = commands[i];
@@ -94,7 +98,7 @@ var commands = [
 	{
 		description: "cheese:\t\t\t\tname a type of cheese",
 		pattern: /^chee(?:s|z)e/,
-		reply: function(match) {
+		reply: function() {
 			var cheeses = ["Anejo", "Asiago", "Blue", "Brie", "Butterkase", "Camembert", "Cheddar", "Chevres",
 						   "Colby", "Cotija", "Edam", "Feta", "Fontina", "Gorgonzola", "Gouda", "Gruyere",
 						   "Havarti", "Limburger", "Monterey Jack", "Mozzarella", "Munster", "Neufchatel",
@@ -105,7 +109,7 @@ var commands = [
 	{
 		description: "now:\t\t\t\tcurrent date and time",
 		pattern: /^now/,
-		reply: function(match) {
+		reply: function() {
 			var date = new Date();
 			return date.toDateString() + " - " + date.toTimeString();
 		}
