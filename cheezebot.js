@@ -235,7 +235,7 @@ var commands = [
 		description: "about:\t\t\t\tdeveloper and source info",
 		pattern: /^about/,
 		reply: function() {
-			return "CheezeBot by Adam-G\nSource: https://github.com/akg1852/CheezeBot\nSuggestions or contributions welcome.";
+			return "CheezeBot by Adam-G\nSource: git.io/1roJvQ\nSuggestions or contributions welcome.";
 		}
 	},
 ];
