@@ -19,7 +19,7 @@ for (var i = 0; i < flows.length; i++) {
 			var flow = JSON.parse(body);
 			flowData[flow.id] = { name: flow.organization.parameterized_name + "/" + flow.parameterized_name, token: flow.api_token };
 		}
-		else console.log("Error getting flow data: " + (error || response) + "\n");
+		else console.error("Error getting flow data: " + (error || response) + "\n");
 	});
 }
 
@@ -64,12 +64,9 @@ function post(reply, data) {
 			if (data) console.log("---" + flow.name + "---\n" + data.user + ": " + data.content);
 			console.log("CheezeBot: " + reply + "\n");
 		}
-		else console.log("Error posting reply: " + (error || response) + "\n");
+		else console.error("Error posting reply: " + (error || response) + "\n");
 	});
 }
-
-// timer data
-var timers = [];
 
 
 /* commands:
@@ -125,7 +122,7 @@ var commands = [
 						if (imageData) post(imageData.images.original.url, data);
 						else post("No suitable gif found - try a different search", data);
 					}
-					else console.log("Error requesting gif: " + (error || response) + "\n");
+					else console.error("Error requesting gif: " + (error || response) + "\n");
 				});
 		}
 	},
@@ -135,13 +132,14 @@ var commands = [
 		reply: function(match, data) {
 			var command = match[1];
 			var time = 0;
-			if (command == "start") timers[data.user] = new Date().getTime();
+			if (command == "start") this.timers[data.user] = new Date().getTime();
 			else {
-				time = (new Date().getTime() - timers[data.user]) / 1000;
-				if (command == "stop") timers[data.user] = undefined;
+				time = (new Date().getTime() - this.timers[data.user]) / 1000;
+				if (command == "stop") this.timers[data.user] = undefined;
 			}
 			return "timer: " + time + " s";
-		}
+		},
+		timers: {}
 	},
 	{
 		description: "roll {dice}d{sides}:\t\troll dice (eg roll 2d6)",
@@ -197,7 +195,7 @@ var commands = [
 					}
 					else post("no open pull requests for " + repo, data);
 				}
-				else console.log("Error requesting github data: " + (error || response) + "\n");
+				else console.error("Error requesting github data: " + (error || response) + "\n");
 			});
 		}
 	},
@@ -226,20 +224,35 @@ var commands = [
 									}
 									else post("No weather information found", data);
 								}
-								else console.log("Error requesting weather information: " + (error || response) + "\n");
+								else console.error("Error requesting weather information: " + (error || response) + "\n");
 							});
 					}
 					else post("No city found matching search", data);
 				}
-				else console.log("Error requesting weather information: " + (error || response) + "\n");
+				else console.error("Error requesting weather information: " + (error || response) + "\n");
 			});
+		}
+	},
+	{
+		description: "catfact:\t\t\tthankyou for signing up for cat facts",
+		pattern: /^catfact/,
+		reply: function(match, data) {
+			request("http://catfacts-api.appspot.com/api/facts?number=1",
+				function(error, response, body) {
+					if (!error && response.statusCode == 200) {
+						post(JSON.parse(body).facts[0], data);
+					}
+					else console.error("Error requesting cat fact: " + (error || response) + "\n");
+				});
 		}
 	},
 	{
 		description: "about:\t\t\t\tdeveloper and source info",
 		pattern: /^about/,
 		reply: function() {
-			return "CheezeBot by Adam-G\nSource: git.io/1roJvQ\nSuggestions or contributions welcome.";
+			return ["CheezeBot by Adam-G", "Source: git.io/1roJvQ", "Suggestions or contributions welcome.",,
+			"API Credits:", "FLOWDOCK.com/api", "WUNDERGROUND.com/weather/api", "developer.GITHUB.com/v3/",
+			"github.com/GIPHY/giphyapi", "CATFACTS-api.appspot.com"].join("\n");
 		}
 	},
 ];
