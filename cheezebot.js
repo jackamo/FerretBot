@@ -19,7 +19,7 @@ for (var i = 0; i < flows.length; i++) {
 			var flow = JSON.parse(body);
 			flowData[flow.id] = { name: flow.organization.parameterized_name + "/" + flow.parameterized_name, token: flow.api_token };
 		}
-		else console.error("Error getting flow data: " + (error || response) + "\n");
+		else console.error("Error getting flow data: " + JSON.stringify(error || response) + "\n");
 	});
 }
 
@@ -48,6 +48,10 @@ stream.on('data', function(data) {
 		}
 	}
 });
+stream.on('error', function(error) {
+	console.error("Error receiving stream data from flowdock: " + JSON.stringify(error) + "\n");
+	// todo: handle stream errors more gracefully
+});
 
 // post a message
 function post(reply, data) {
@@ -64,7 +68,7 @@ function post(reply, data) {
 			if (data) console.log("---" + flow.name + "---\n" + data.user + ": " + data.content);
 			console.log("CheezeBot: " + reply + "\n");
 		}
-		else console.error("Error posting reply: " + (error || response) + "\n");
+		else console.error("Error posting reply: " + JSON.stringify(error || response) + "\n");
 	});
 }
 
@@ -122,7 +126,7 @@ var commands = [
 						if (imageData) post(imageData.images.original.url, data);
 						else post("No suitable gif found - try a different search", data);
 					}
-					else console.error("Error requesting gif: " + (error || response) + "\n");
+					else console.error("Error requesting gif: " + JSON.stringify(error || response) + "\n");
 				});
 		}
 	},
@@ -195,7 +199,7 @@ var commands = [
 					}
 					else post("no open pull requests for " + repo, data);
 				}
-				else console.error("Error requesting github data: " + (error || response) + "\n");
+				else console.error("Error requesting github data: " + JSON.stringify(error || response) + "\n");
 			});
 		}
 	},
@@ -224,12 +228,12 @@ var commands = [
 									}
 									else post("No weather information found", data);
 								}
-								else console.error("Error requesting weather information: " + (error || response) + "\n");
+								else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
 							});
 					}
 					else post("No city found matching search", data);
 				}
-				else console.error("Error requesting weather information: " + (error || response) + "\n");
+				else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
 			});
 		}
 	},
@@ -242,7 +246,7 @@ var commands = [
 					if (!error && response.statusCode == 200) {
 						post(JSON.parse(body).facts[0], data);
 					}
-					else console.error("Error requesting cat fact: " + (error || response) + "\n");
+					else console.error("Error requesting cat fact: " + JSON.stringify(error || response) + "\n");
 				});
 		}
 	},
