@@ -1,4 +1,5 @@
 var request = require('request'),
+	fs = require('fs'),
 	JSONStream = require('JSONStream');
 
 // credentials
@@ -48,9 +49,17 @@ stream.on('data', function(data) {
 		}
 	}
 });
+stream.on('end', function() {
+	console.error("flowdock stream ended");
+	// todo: handle stream end more gracefully
+});
+stream.on('close', function() {
+	console.error("flowdock stream closed");
+	// todo: handle stream close more gracefully
+});
 stream.on('error', function(error) {
 	console.error("Error receiving stream data from flowdock: " + JSON.stringify(error) + "\n");
-	// todo: handle stream errors more gracefully
+	// todo: handle stream error more gracefully
 });
 
 // post a message
@@ -105,14 +114,6 @@ var commands = [
 						   "Havarti", "Limburger", "Monterey Jack", "Mozzarella", "Munster", "Neufchatel",
 						   "Parmesan", "Provolone", "Queso Blanco", "Raclette", "Romano", "Swiss"];
 			return cheeses[Math.floor(Math.random() * cheeses.length)];
-		}
-	},
-	{
-		description: "now:\t\t\t\tcurrent date and time",
-		pattern: /^now/,
-		reply: function() {
-			var date = new Date();
-			return date.toDateString() + " - " + date.toTimeString();
 		}
 	},
 	{
@@ -248,6 +249,31 @@ var commands = [
 					}
 					else console.error("Error requesting cat fact: " + JSON.stringify(error || response) + "\n");
 				});
+		}
+	},
+	{
+		description: "quote [\"{quote}\" - {quotee}]:\tquote store",
+		pattern: /^quote(?: (.+))?/,
+		reply: function(match, data) {
+			if (typeof match[1] == "string") {
+				var quote = match[1].trim();
+				if (quote.match(/".+" - .+/)) {
+					fs.appendFile("quotes.txt", quote + "\n", function(error) {
+						if (!error) post("Thanks for the new quote!", data);
+						else console.error("Error writing quote: " + JSON.stringify(error));
+					});
+				}
+				else post("No! Badly formatted quote!", data);
+			}
+			else {
+				fs.readFile("quotes.txt", {encoding: "utf8"}, function(error, quoteFile) {
+					if (!error) {
+						var quotes = quoteFile.split("\n").filter(function(x) { return !!x; });
+						post(quotes[Math.floor(Math.random() * quotes.length)], data);
+					}
+					else console.error("Error reading quote: " + JSON.stringify(error));
+				});
+			}
 		}
 	},
 	{
