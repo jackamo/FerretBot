@@ -108,17 +108,6 @@ var commands = [
 		}
 	},
 	{
-		description: "cheese:\t\t\t\tname a type of cheese",
-		pattern: /^chee(?:s|z)e/,
-		reply: function() {
-			var cheeses = ["Anejo", "Asiago", "Blue", "Brie", "Butterkase", "Camembert", "Cheddar", "Chevres",
-						   "Colby", "Cotija", "Edam", "Feta", "Fontina", "Gorgonzola", "Gouda", "Gruyere",
-						   "Havarti", "Limburger", "Monterey Jack", "Mozzarella", "Munster", "Neufchatel",
-						   "Parmesan", "Provolone", "Queso Blanco", "Raclette", "Romano", "Swiss"];
-			return cheeses[Math.floor(Math.random() * cheeses.length)];
-		}
-	},
-	{
 		description: "gif {search string}:\t\tshow a gif based on a search string",
 		pattern: /^gif (.+)/,
 		reply: function(match, data) {
@@ -146,6 +135,94 @@ var commands = [
 					}
 					else console.error("Error requesting video: " + JSON.stringify(error || response) + "\n");
 				});
+		}
+	},
+	{
+		description: "pullrequests {user}/{repo}:\tlist open pull requests",
+		pattern: /^pullrequests (.+\/.+)/,
+		reply: function(match, data) {
+			var repo = match[1].trim();
+			var domain = githubDomain ? githubDomain + "/api/v3" : "https://api.github.com";
+			var options = {
+				url: encodeURI(domain + "/repos/" + repo + "/pulls?access_token=" + githubToken),
+				method: "GET",
+				rejectUnauthorized: false,
+				headers: { "User-Agent": "CheezeBot" }
+			};
+			request(options, function(error, response, body) {
+				if (!error && response.statusCode == 200) {
+					var prs = JSON.parse(body);
+					if (prs.length) {
+						var result = "Pull requests for " + repo + ":";
+						for (var i = 0; i < prs.length; i++) {
+							var pr = prs[i];
+							result += "\n\t*  " + pr.title + ": " + pr.html_url;
+						}
+						post(result, data);
+					}
+					else post("no open pull requests for " + repo, data);
+				}
+				else console.error("Error requesting github data: " + JSON.stringify(error || response) + "\n");
+			});
+		}
+	},
+	{
+		description: "quote [\"{quote}\" - {quotee}]:\tquote store",
+		pattern: /^quote(?: (.+))?/,
+		reply: function(match, data) {
+			if (typeof match[1] == "string") {
+				var quote = match[1].trim();
+				if (quote.match(/["“].+["”] - .+/)) {
+					fs.appendFile("quotes.txt", quote + "\n", function(error) {
+						if (!error) post("Thanks for the new quote!", data);
+						else console.error("Error writing quote: " + JSON.stringify(error));
+					});
+				}
+				else post("No! Badly formatted quote!", data);
+			}
+			else {
+				fs.readFile("quotes.txt", {encoding: "utf8"}, function(error, quoteFile) {
+					if (!error) {
+						var quotes = quoteFile.split("\n").filter(function(x) { return !!x; });
+						post(quotes[Math.floor(Math.random() * quotes.length)], data);
+					}
+					else console.error("Error reading quote: " + JSON.stringify(error));
+				});
+			}
+		}
+	},
+	{
+		description: "weather {city}:\t\t\tweather forecast information",
+		pattern: /^weather (.+)/,
+		reply: function(match, data) {
+			request(encodeURI("http://autocomplete.wunderground.com/aq?query=" + match[1]), function(error, response, body) {
+				if (!error && response.statusCode == 200) {
+					var cities = JSON.parse(body).RESULTS;
+					if (cities.length)  {
+						request(encodeURI("http://api.wunderground.com/api/" + wunderToken + "/forecast10day" + cities[0].l + ".json"),
+							function(error, response, body) {
+								if (!error && response.statusCode == 200) {
+									var forecast = JSON.parse(body).forecast;
+									if (forecast) {
+										var forecastDays = forecast.simpleforecast.forecastday;
+										var result = "Weather forecast for " + cities[0].name + ":";
+										for (var i = 0; i < 7; i++) {
+											var day = forecastDays[i];
+											result += "\n\t*  " + day.date.weekday + ":\t" + pad(20, day.conditions).substr(0, 20) + "| " +
+													  day.high.celsius + "/" + day.low.celsius + "°C\t| " +
+													  day.avewind.kph + "kph " + day.avewind.dir;
+										}
+										post(result, data);
+									}
+									else post("No weather information found", data);
+								}
+								else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
+							});
+					}
+					else post("No city found matching search", data);
+				}
+				else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
+			});
 		}
 	},
 	{
@@ -193,69 +270,6 @@ var commands = [
 		}
 	},
 	{
-		description: "pullrequests {user}/{repo}:\tlist open pull requests",
-		pattern: /^pullrequests (.+\/.+)/,
-		reply: function(match, data) {
-			var repo = match[1].trim();
-			var domain = githubDomain ? githubDomain + "/api/v3" : "https://api.github.com";
-			var options = {
-				url: encodeURI(domain + "/repos/" + repo + "/pulls?access_token=" + githubToken),
-				method: "GET",
-				rejectUnauthorized: false,
-				headers: { "User-Agent": "CheezeBot" }
-			};
-			request(options, function(error, response, body) {
-				if (!error && response.statusCode == 200) {
-					var prs = JSON.parse(body);
-					if (prs.length) {
-						var result = "Pull requests for " + repo + ":";
-						for (var i = 0; i < prs.length; i++) {
-							var pr = prs[i];
-							result += "\n\t*  " + pr.title + ": " + pr.html_url;
-						}
-						post(result, data);
-					}
-					else post("no open pull requests for " + repo, data);
-				}
-				else console.error("Error requesting github data: " + JSON.stringify(error || response) + "\n");
-			});
-		}
-	},
-	{
-		description: "weather {city}:\t\t\tweather forecast information",
-		pattern: /^weather (.+)/,
-		reply: function(match, data) {
-			request(encodeURI("http://autocomplete.wunderground.com/aq?query=" + match[1]), function(error, response, body) {
-				if (!error && response.statusCode == 200) {
-					var cities = JSON.parse(body).RESULTS;
-					if (cities.length)  {
-						request(encodeURI("http://api.wunderground.com/api/" + wunderToken + "/forecast10day" + cities[0].l + ".json"),
-							function(error, response, body) {
-								if (!error && response.statusCode == 200) {
-									var forecast = JSON.parse(body).forecast;
-									if (forecast) {
-										var forecastDays = forecast.simpleforecast.forecastday;
-										var result = "Weather forecast for " + cities[0].name + ":";
-										for (var i = 0; i < 7; i++) {
-											var day = forecastDays[i];
-											result += "\n\t*  " + day.date.weekday + ":\t" + pad(20, day.conditions).substr(0, 20) + "| " +
-													  day.high.celsius + "/" + day.low.celsius + "°C\t| " +
-													  day.avewind.kph + "kph " + day.avewind.dir;
-										}
-										post(result, data);
-									}
-									else post("No weather information found", data);
-								}
-								else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
-							});
-					}
-					else post("No city found matching search", data);
-				}
-				else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
-			});
-		}
-	},
-	{
 		description: "catfact:\t\t\tthankyou for signing up for cat facts",
 		pattern: /^catfact/,
 		reply: function(match, data) {
@@ -266,31 +280,6 @@ var commands = [
 					}
 					else console.error("Error requesting cat fact: " + JSON.stringify(error || response) + "\n");
 				});
-		}
-	},
-	{
-		description: "quote [\"{quote}\" - {quotee}]:\tquote store",
-		pattern: /^quote(?: (.+))?/,
-		reply: function(match, data) {
-			if (typeof match[1] == "string") {
-				var quote = match[1].trim();
-				if (quote.match(/["“].+["”] - .+/)) {
-					fs.appendFile("quotes.txt", quote + "\n", function(error) {
-						if (!error) post("Thanks for the new quote!", data);
-						else console.error("Error writing quote: " + JSON.stringify(error));
-					});
-				}
-				else post("No! Badly formatted quote!", data);
-			}
-			else {
-				fs.readFile("quotes.txt", {encoding: "utf8"}, function(error, quoteFile) {
-					if (!error) {
-						var quotes = quoteFile.split("\n").filter(function(x) { return !!x; });
-						post(quotes[Math.floor(Math.random() * quotes.length)], data);
-					}
-					else console.error("Error reading quote: " + JSON.stringify(error));
-				});
-			}
 		}
 	},
 	{
