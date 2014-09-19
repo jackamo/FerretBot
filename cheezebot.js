@@ -10,7 +10,9 @@ var apiToken = "",
 	githubToken = "",
 	githubDomain = null, // null for default
 	// weather underground
-	wunderToken = "";
+    wunderToken = "",
+	// youtube
+	youtubeToken = "";
 	
 // get flow data
 var flowData = {};
