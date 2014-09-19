@@ -124,7 +124,7 @@ var commands = [
 	},
 	{
 		description: "video {search string}:\t\tshow a video based on a search string",
-		pattern: /^video (.+)/,
+		pattern: /^(?:video|youtube) (.+)/,
 		reply: function(match, data) {
 			request(encodeURI("https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&key=" + youtubeToken + "&q=" + match[1]),
 				function(error, response, body) {
