@@ -134,6 +134,21 @@ var commands = [
 		}
 	},
 	{
+		description: "video {search string}:\t\tshow a video based on a search string",
+		pattern: /^video (.+)/,
+		reply: function(match, data) {
+			request(encodeURI("https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&key=" + youtubeToken + "&q=" + match[1]),
+				function(error, response, body) {
+					if (!error && response.statusCode == 200) {
+						var videoData = JSON.parse(body).items[0];
+						if (videoData) post("http://www.youtube.com/watch?v=" + videoData.id.videoId, data);
+						else post("No suitable video found - try a different search", data);
+					}
+					else console.error("Error requesting video: " + JSON.stringify(error || response) + "\n");
+				});
+		}
+	},
+	{
 		description: "timer [start|stop]:\t\tstart/stop a timer",
 		pattern: /^timer(?: (start|stop))?/,
 		reply: function(match, data) {
@@ -259,7 +274,7 @@ var commands = [
 		reply: function(match, data) {
 			if (typeof match[1] == "string") {
 				var quote = match[1].trim();
-				if (quote.match(/".+" - .+/)) {
+				if (quote.match(/["“].+["”] - .+/)) {
 					fs.appendFile("quotes.txt", quote + "\n", function(error) {
 						if (!error) post("Thanks for the new quote!", data);
 						else console.error("Error writing quote: " + JSON.stringify(error));
@@ -284,7 +299,7 @@ var commands = [
 		reply: function() {
 			return ["CheezeBot by Adam-G", "Source: git.io/1roJvQ", "Suggestions or contributions welcome.",,
 			"API Credits:", "FLOWDOCK.com/api", "WUNDERGROUND.com/weather/api", "developer.GITHUB.com/v3/",
-			"github.com/GIPHY/giphyapi", "CATFACTS-api.appspot.com"].join("\n");
+			"github.com/GIPHY/giphyapi", "CATFACTS-api.appspot.com", "developers.GOOGLE.com/youtube/v3/"].join("\n");
 		}
 	},
 ];
