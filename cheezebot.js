@@ -13,7 +13,9 @@ var apiToken = "",
 	// weather underground
 	wunderToken = "",
 	// youtube
-	youtubeToken = "";
+	youtubeToken = "",
+	// wolfram alpha
+	wolframToken = "";
 	
 // get flow data
 var flowData = {};
