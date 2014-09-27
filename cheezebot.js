@@ -265,7 +265,7 @@ var commands = [
 		}
 	},
 	{
-		description: "wolfram {search string}]:\tsearch wolfram alpha",
+		description: "wolfram {search string}:\tsearch wolfram alpha",
 		pattern: /^wolfram (.+)/,
 		reply: function(match, data) {
 			request(encodeURI("http://api.wolframalpha.com/v2/query?appid=" + wolframToken + "&input=" + match[1]),
@@ -290,7 +290,7 @@ var commands = [
 		}
 	},
 	{
-		description: "email {address} {subject} \\n {message}:\t\tsend email",
+		description: "email {addr} {subj} \\n {msg}:\tsend email",
 		pattern: /^email (\S+@\S+)\s+([^\n\r]+)\s+([\s\S]+)/,
 		reply: function(match, data) {
 			getUserInfo(data.user, function(user) {
@@ -350,7 +350,8 @@ var commands = [
 		reply: function() {
 			return ["CheezeBot by Adam-G", "Source: git.io/1roJvQ", "Suggestions or contributions welcome.",,
 			"API Credits:", "FLOWDOCK.com/api", "WUNDERGROUND.com/weather/api", "developer.GITHUB.com/v3/",
-			"github.com/GIPHY/giphyapi", "CATFACTS-api.appspot.com", "developers.GOOGLE.com/youtube/v3/"].join("\n");
+			"github.com/GIPHY/giphyapi", "CATFACTS-api.appspot.com", "developers.GOOGLE.com/youtube/v3/",
+			"http://products.WOLFRAMALPHA.com/api/"].join("\n");
 		}
 	},
 ];
