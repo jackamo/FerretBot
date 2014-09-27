@@ -1,7 +1,8 @@
 var request = require('request'),
 	fs = require('fs'),
 	JSONStream = require('JSONStream'),
-	nodemailer = require('nodemailer');
+	nodemailer = require('nodemailer'),
+	xml2js = require('xml2js');
 
 // credentials
 	// flowdock
@@ -51,7 +52,7 @@ stream.on('data', function(data) {
 	if (data.event == "message" && typeof data.content == "string") {
 		
 		// check if message is for CheezeBot
-		var match = data.content.match(/^chee(?:s|z)ebot2 ([\s\S]+)/i);
+		var match = data.content.match(/^chee(?:s|z)ebot ([\s\S]+)/i);
 		if (match) {
 			var message = match[1];
 			
@@ -264,6 +265,31 @@ var commands = [
 		}
 	},
 	{
+		description: "wolfram {search string}]:\tsearch wolfram alpha",
+		pattern: /^wolfram (.+)/,
+		reply: function(match, data) {
+			request(encodeURI("http://api.wolframalpha.com/v2/query?appid=" + wolframToken + "&input=" + match[1]),
+				function(error, response, body) {
+					if (!error && response.statusCode == 200) {
+						xml2js.parseString(body, function (error, result) {
+							if (result.queryresult.$.success == "true") {
+								post([].concat.apply([], result.queryresult.pod.map(function(p) {
+									var podText = [].concat.apply([], p.subpod.map(function(sp) {
+										return sp.plaintext[0].split("\n").map(function(t) {
+											return t ? "    " + t : null;
+										});
+									})).filter(function(t) { return t != null; }).join("\n");
+									return podText ? p.$.title + ": \n" + podText : null;
+								})).filter(function(t) { return t != null; }).join("\n"), data);
+							}
+							else post("No wolfram results found", data);
+						});
+					}
+					else console.error("Error requesting wolfram alpha information: " + JSON.stringify(error || response) + "\n");
+				});
+		}
+	},
+	{
 		description: "email {address} {subject} \\n {message}:\t\tsend email",
 		pattern: /^email (\S+@\S+)\s+([^\n\r]+)\s+([\s\S]+)/,
 		reply: function(match, data) {
@@ -303,22 +329,6 @@ var commands = [
 				result += (Math.floor(Math.random() * sides) + 1) + " ";
 			}
 			return result;
-		}
-	},
-	{
-		description: "math {func} [{params...}]:\tmath functions (eg cos, floor, pow)",
-		pattern: /^math( [^ ]+)+/,
-		reply: function(match) {
-			var args = match[0].split(" ");
-			var func = Math[args[1]];
-			if (typeof func == "function") {
-				args = args.slice(2).map(function(x) { return Number(x); });
-				return func.apply(this, args);
-			}
-			else if (func != undefined) {
-				return func;
-			}
-			return "math function unknown: " + args[1];
 		}
 	},
 	{
