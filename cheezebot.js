@@ -1,6 +1,7 @@
 var request = require('request'),
 	fs = require('fs'),
-	JSONStream = require('JSONStream');
+	JSONStream = require('JSONStream'),
+	nodemailer = require('nodemailer');
 
 // credentials
 	// flowdock
@@ -33,7 +34,7 @@ stream.on('data', function(data) {
 	if (data.event == "message" && typeof data.content == "string") {
 		
 		// check if message is for CheezeBot
-		var match = data.content.match(/chee(?:s|z)ebot (.+)/i);
+		var match = data.content.match(/^chee(?:s|z)ebot2 ([\s\S]+)/i);
 		if (match) {
 			var message = match[1];
 			
@@ -80,6 +81,18 @@ function post(reply, data) {
 			console.log("CheezeBot: " + reply + "\n");
 		}
 		else console.error("Error posting reply: " + JSON.stringify(error || response) + "\n");
+	});
+}
+
+// send an email
+function email(email, data) {
+	nodemailer.createTransport().sendMail(email, function(error, info) {
+		if (!error) {
+			var result = (info.rejected.length > 0) ? "Failed to send email" : "Email sent";
+			if (data) post(result, data);
+			else console.log(result);
+		}
+		else console.error("Error sending email: " + JSON.stringify(error) + "\n");
 	});
 }
 
@@ -223,6 +236,18 @@ var commands = [
 				}
 				else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
 			});
+		}
+	},
+	{
+		description: "email {address} \\n {message}:\t\tsend email",
+		pattern: /^email (\S+@\S+)\s+([\s\S]+)/,
+		reply: function(match, data) {
+			email({
+				from: "cheezebot@test.xero.com",
+				to: match[1],
+				subject: "A message from CheezeBot",
+				text: match[2]
+			}, data);
 		}
 	},
 	{
