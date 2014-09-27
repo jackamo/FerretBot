@@ -27,6 +27,21 @@ for (var i = 0; i < flows.length; i++) {
 	});
 }
 
+// get user info
+var userInfo = {};
+function getUserInfo(id, callback) {
+	if (userInfo[id]) callback(userInfo[id]);
+		
+	else request(encodeURI("https://" + apiToken + ":DUMMY@api.flowdock.com/users/" + id),
+		function(error, response, body) {
+			if (!error && response.statusCode == 200) {
+				userInfo[id] = JSON.parse(body);
+				callback(userInfo[id]);
+			}
+			else console.error("Error requesting user info: " + JSON.stringify(error || response) + "\n");
+		});
+}
+
 // stream messages
 var stream = request(encodeURI("https://" + apiToken + ":DUMMY@stream.flowdock.com/flows?filter=" + flows.join(",")))
 	.pipe(JSONStream.parse());
@@ -77,8 +92,13 @@ function post(reply, data) {
 	request(options, function(error, response, body) {
 		// log
 		if (!error && response.statusCode == 200) {
-			if (data) console.log("---" + flow.name + "---\n" + data.user + ": " + data.content);
-			console.log("CheezeBot: " + reply + "\n");
+			if (data) {
+				getUserInfo(data.user, function(user) {
+					console.log("---" + flow.name + "---\n" + user.nick + ": " + data.content);
+					console.log("CheezeBot: " + reply + "\n");
+				})
+			}
+			else console.log("CheezeBot: " + reply + "\n");
 		}
 		else console.error("Error posting reply: " + JSON.stringify(error || response) + "\n");
 	});
@@ -92,7 +112,10 @@ function email(email, data) {
 			if (data) post(result, data);
 			else console.log(result);
 		}
-		else console.error("Error sending email: " + JSON.stringify(error) + "\n");
+		else {
+			if (data) post("Unable to send email", data);
+			console.error("Error sending email: " + JSON.stringify(error) + "\n");
+		}
 	});
 }
 
@@ -239,15 +262,17 @@ var commands = [
 		}
 	},
 	{
-		description: "email {address} \\n {message}:\t\tsend email",
-		pattern: /^email (\S+@\S+)\s+([\s\S]+)/,
+		description: "email {address} {subject} \\n {message}:\t\tsend email",
+		pattern: /^email (\S+@\S+)\s+([^\n\r]+)\s+([\s\S]+)/,
 		reply: function(match, data) {
-			email({
-				from: "cheezebot@test.xero.com",
-				to: match[1],
-				subject: "A message from CheezeBot",
-				text: match[2]
-			}, data);
+			getUserInfo(data.user, function(user) {
+				email({
+					from: user.name + " <" + user.email + ">",
+					to: match[1],
+					subject: match[2],
+					text: match[3]
+				}, data);
+			});
 		}
 	},
 	{
