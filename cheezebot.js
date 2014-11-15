@@ -292,7 +292,7 @@ var commands = [
 		}
 	},
 	{
-		description: "tally {category} [{member}] [++|--|+= n|-= n]:\t\tkeep a tally",
+		description: "tally {category} [{member}]\n\t\t[++|--|+= n|-= n]:\tkeep a tally",
 		pattern: /^tally (\S+)(?: ([^\s+-]*)\s*(\+\+|--|\+=\s*\d+|-=\s*\d+)?)?/,
 		reply: function(match, context) {
 			var category = match[1];
