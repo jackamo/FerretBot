@@ -75,14 +75,17 @@ stream.on('data', function(context) {
 });
 stream.on('end', function() {
 	console.error("flowdock stream ended");
+	console.log(JSON.stringify(stream));
 	// todo: handle stream end more gracefully
 });
 stream.on('close', function() {
 	console.error("flowdock stream closed");
+	console.log(JSON.stringify(stream));
 	// todo: handle stream close more gracefully
 });
 stream.on('error', function(error) {
 	console.error("Error receiving stream data from flowdock: " + JSON.stringify(error) + "\n");
+	console.log(JSON.stringify(stream));
 	// todo: handle stream error more gracefully
 });
 
