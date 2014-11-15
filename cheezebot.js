@@ -49,11 +49,11 @@ function getUserInfo(id, callback) {
 // stream messages
 var stream = request(encodeURI("https://" + apiToken + ":DUMMY@stream.flowdock.com/flows?filter=" + flows.join(",")))
 	.pipe(JSONStream.parse());
-stream.on('data', function(data) {
-	if (data.event == "message" && typeof data.content == "string") {
+stream.on('data', function(context) {
+	if (context.event == "message" && typeof context.content == "string") {
 		
 		// check if message is for CheezeBot
-		var match = data.content.match(/^chee(?:s|z)ebot ([\s\S]+)/i);
+		var match = context.content.match(/^chee(?:s|z)ebot ([\s\S]+)/i);
 		if (match) {
 			var message = match[1];
 			
@@ -63,11 +63,11 @@ stream.on('data', function(data) {
 				var command = commands[i];
 				var match = message.match(command.pattern);
 				if (match) {
-					reply = command.reply(match, data);
+					reply = command.reply(match, context);
 					break;
 				}
 			}
-			if (reply != null && reply != undefined) post(reply, data);
+			if (reply != null && reply != undefined) post(reply, context);
 		}
 	}
 });
@@ -85,8 +85,8 @@ stream.on('error', function(error) {
 });
 
 // post a message
-function post(reply, data) {
-	var flow = flowData[data.flow];
+function post(reply, context) {
+	var flow = flowData[context.flow];
 	var options = {
 		url: encodeURI("https://api.flowdock.com/v1/messages/chat/" + flow.token),
 		method: "POST",
@@ -96,13 +96,10 @@ function post(reply, data) {
 	request(options, function(error, response, body) {
 		// log
 		if (!error && response.statusCode == 200) {
-			if (data) {
-				getUserInfo(data.user, function(user) {
-					console.log("---" + flow.name + "---\n" + user.nick + ": " + data.content);
-					console.log("CheezeBot: " + reply + "\n");
-				})
-			}
-			else console.log("CheezeBot: " + reply + "\n");
+			getUserInfo(context.user, function(user) {
+				console.log("---" + flow.name + "--- (" + now() + ")\n" + user.nick + ": " + context.content);
+				console.log("CheezeBot: " + reply + "\n");
+			})
 		}
 		else console.error("Error posting reply: " + JSON.stringify(error || response) + "\n");
 	});
@@ -115,7 +112,7 @@ each command requires:
 	* a regex 'pattern' to trigger the command
 	* a 'reply' method which takes parameters:
 		* the regex 'match' array
-		* the flowdock stream 'data' object
+		* the flowdock stream 'context' object
 	  the 'reply' method returns CheezeBot's reply (or null for no reply)
 	  (alternatively, 'reply' can call the 'post' method directly, which is useful inside a callback)
 */
@@ -135,13 +132,13 @@ var commands = [
 	{
 		description: "gif {search string}:\t\tshow a gif based on a search string",
 		pattern: /^gif (.+)/,
-		reply: function(match, data) {
+		reply: function(match, context) {
 			request(encodeURI("http://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&limit=1&q=" + match[1]),
 				function(error, response, body) {
 					if (!error && response.statusCode == 200) {
 						var imageData = JSON.parse(body).data[0];
-						if (imageData) post(imageData.images.original.url, data);
-						else post("No suitable gif found - try a different search", data);
+						if (imageData) post(imageData.images.original.url, context);
+						else post("No suitable gif found - try a different search", context);
 					}
 					else console.error("Error requesting gif: " + JSON.stringify(error || response) + "\n");
 				});
@@ -150,13 +147,13 @@ var commands = [
 	{
 		description: "video {search string}:\t\tshow a video based on a search string",
 		pattern: /^(?:video|youtube) (.+)/,
-		reply: function(match, data) {
+		reply: function(match, context) {
 			request(encodeURI("https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&key=" + youtubeToken + "&q=" + match[1]),
 				function(error, response, body) {
 					if (!error && response.statusCode == 200) {
 						var videoData = JSON.parse(body).items[0];
-						if (videoData) post("http://www.youtube.com/watch?v=" + videoData.id.videoId, data);
-						else post("No suitable video found - try a different search", data);
+						if (videoData) post("http://www.youtube.com/watch?v=" + videoData.id.videoId, context);
+						else post("No suitable video found - try a different search", context);
 					}
 					else console.error("Error requesting video: " + JSON.stringify(error || response) + "\n");
 				});
@@ -165,7 +162,7 @@ var commands = [
 	{
 		description: "pullrequests {user}/{repo}:\tlist open pull requests",
 		pattern: /^pullrequests (.+\/.+)/,
-		reply: function(match, data) {
+		reply: function(match, context) {
 			var repo = match[1].trim();
 			var domain = githubDomain ? githubDomain + "/api/v3" : "https://api.github.com";
 			var options = {
@@ -183,9 +180,9 @@ var commands = [
 							var pr = prs[i];
 							result += "\n\t*  " + pr.title + ": " + pr.html_url;
 						}
-						post(result, data);
+						post(result, context);
 					}
-					else post("no open pull requests for " + repo, data);
+					else post("no open pull requests for " + repo, context);
 				}
 				else console.error("Error requesting github data: " + JSON.stringify(error || response) + "\n");
 			});
@@ -194,7 +191,7 @@ var commands = [
 	{
 		description: "quote [\"{quote}\" - {quotee}]:\tquote store",
 		pattern: /^quote(?: (.+))?/,
-		reply: function(match, data) {
+		reply: function(match, context) {
 			dbConnect(function(db) {
 				db.run("CREATE TABLE IF NOT EXISTS quote (quote TEXT)", function(error) {
 					if (error) {
@@ -205,16 +202,16 @@ var commands = [
 						if (quote.match(/["“].+["”] - .+/)) {
 							db.run("INSERT INTO quote VALUES (?)", quote, function(error) {
 								if (error) console.error("Error writing quote: " + JSON.stringify(error));
-								else post("Thanks for the new quote!", data);
+								else post("Thanks for the new quote!", context);
 							});
 						}
-						else post("No! Badly formatted quote!", data);
+						else post("No! Badly formatted quote!", context);
 					}
 					else {
 						db.all("SELECT * FROM quote", function(error, rows) {
 							if (error) console.error("Error reading quote: " + JSON.stringify(error));
-							else if (!rows.length) post("No quotes available.", data);
-							else post(rows[Math.floor(Math.random() * rows.length)].quote, data);
+							else if (!rows.length) post("No quotes available.", context);
+							else post(rows[Math.floor(Math.random() * rows.length)].quote, context);
 						});
 					}
 				});
@@ -224,7 +221,7 @@ var commands = [
 	{
 		description: "weather {city}:\t\t\tweather forecast information",
 		pattern: /^weather (.+)/,
-		reply: function(match, data) {
+		reply: function(match, context) {
 			request(encodeURI("http://autocomplete.wunderground.com/aq?query=" + match[1]), function(error, response, body) {
 				if (!error && response.statusCode == 200) {
 					var cities = JSON.parse(body).RESULTS;
@@ -242,14 +239,14 @@ var commands = [
 													  day.high.celsius + "/" + day.low.celsius + "°C\t| " +
 													  day.avewind.kph + "kph " + day.avewind.dir;
 										}
-										post(result, data);
+										post(result, context);
 									}
-									else post("No weather information found", data);
+									else post("No weather information found", context);
 								}
 								else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
 							});
 					}
-					else post("No city found matching search", data);
+					else post("No city found matching search", context);
 				}
 				else console.error("Error requesting weather information: " + JSON.stringify(error || response) + "\n");
 			});
@@ -258,12 +255,12 @@ var commands = [
 	{
 		description: "wolfram {search string}:\tsearch wolfram alpha",
 		pattern: /^wolfram (.+)/,
-		reply: function(match, data) {
+		reply: function(match, context) {
 			request(encodeURI("http://api.wolframalpha.com/v2/query?appid=" + wolframToken + "&input=" + match[1]),
 				function(error, response, body) {
 					if (!error && response.statusCode == 200) {
 						xml2js.parseString(body, function (error, result) {
-							if (result.queryresult.$.success == "true") {
+							if (result.queryresult.$.success == "true" && result.queryresult.pod) {
 								post([].concat.apply([], result.queryresult.pod.map(function(p) {
 									var podText = [].concat.apply([], p.subpod.map(function(sp) {
 										return sp.plaintext[0].split("\n").map(function(t) {
@@ -271,9 +268,9 @@ var commands = [
 										});
 									})).filter(function(t) { return t != null; }).join("\n");
 									return podText ? p.$.title + ": \n" + podText : null;
-								})).filter(function(t) { return t != null; }).join("\n"), data);
+								})).filter(function(t) { return t != null; }).join("\n"), context);
 							}
-							else post("No wolfram results found", data);
+							else post("No wolfram results found", context);
 						});
 					}
 					else console.error("Error requesting wolfram alpha information: " + JSON.stringify(error || response) + "\n");
@@ -283,21 +280,21 @@ var commands = [
 	{
 		description: "email {addr} {subj} \\n {msg}:\tsend email",
 		pattern: /^email (\S+@\S+)\s+([^\n\r]+)\s+([\s\S]+)/,
-		reply: function(match, data) {
-			getUserInfo(data.user, function(user) {
+		reply: function(match, context) {
+			getUserInfo(context.user, function(user) {
 				email({
 					from: user.name + " <" + user.email + ">",
 					to: match[1],
 					subject: match[2],
 					text: match[3]
-				}, data);
+				}, context);
 			});
 		}
 	},
 	{
 		description: "tally {category} [{member}] [++|--|+= n|-= n]:\t\tkeep a tally",
 		pattern: /^tally (\S+)(?: ([^\s+-]*)\s*(\+\+|--|\+=\s*\d+|-=\s*\d+)?)?/,
-		reply: function(match, data) {
+		reply: function(match, context) {
 			var category = match[1];
 			var member = match[2];
 			var command = match[3];
@@ -317,7 +314,7 @@ var commands = [
 									for (var i = 0; i < rows.length; i++) {
 										result += "\n\t" + rows[i].member + ": " + rows[i].count;
 									}
-									post("Tally for " + category + ":" + result, data);
+									post("Tally for " + category + ":" + result, context);
 								};
 								if (member) {
 									var count = rows.length ? rows[0].count : 0;
@@ -354,11 +351,11 @@ var commands = [
 	{
 		description: "catfact:\t\t\tthankyou for signing up for cat facts",
 		pattern: /^catfact/,
-		reply: function(match, data) {
+		reply: function(match, context) {
 			request("http://catfacts-api.appspot.com/api/facts?number=1",
 				function(error, response, body) {
 					if (!error && response.statusCode == 200) {
-						post(JSON.parse(body).facts[0], data);
+						post(JSON.parse(body).facts[0], context);
 					}
 					else console.error("Error requesting cat fact: " + JSON.stringify(error || response) + "\n");
 				});
@@ -379,6 +376,13 @@ var commands = [
 
 // UTILITY FUNCTIONS:
 
+// current time
+function now() {
+	var d = new Date();
+	return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate() + " " +
+		d.getHours() + ":" + d.getMinutes();
+}
+
 // pad string to length
 function pad(len, str) {
 	while (str.length < len) str += " ";
@@ -386,15 +390,15 @@ function pad(len, str) {
 }
 
 // send an email
-function email(email, data) {
+function email(email, context) {
 	nodemailer.createTransport().sendMail(email, function(error, info) {
 		if (!error) {
 			var result = (info.rejected.length > 0) ? "Failed to send email" : "Email sent";
-			if (data) post(result, data);
+			if (context) post(result, context);
 			else console.log(result);
 		}
 		else {
-			if (data) post("Unable to send email", data);
+			if (context) post("Unable to send email", context);
 			console.error("Error sending email: " + JSON.stringify(error) + "\n");
 		}
 	});
