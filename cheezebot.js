@@ -1,9 +1,11 @@
 var request = require('request'),
-	fs = require('fs'),
 	JSONStream = require('JSONStream'),
 	nodemailer = require('nodemailer'),
 	xml2js = require('xml2js'),
 	sqlite3 = require('sqlite3').verbose();
+
+// bot name
+var botName = "cheezebot";
 
 // credentials
 	// flowdock
@@ -53,7 +55,7 @@ stream.on('data', function(context) {
 	if (context.event == "message" && typeof context.content == "string") {
 		
 		// check if message is for CheezeBot
-		var match = context.content.match(/^chee(?:s|z)ebot ([\s\S]+)/i);
+		var match = context.content.match(new RegExp("^" + botName + " ([\s\S]+)", "i"));
 		if (match) {
 			var message = match[1];
 			
@@ -106,16 +108,7 @@ function post(reply, context) {
 }
 
 
-/* commands:
-each command requires:
-	* a 'description' for the help listing
-	* a regex 'pattern' to trigger the command
-	* a 'reply' method which takes parameters:
-		* the regex 'match' array
-		* the flowdock stream 'context' object
-	  the 'reply' method returns CheezeBot's reply (or null for no reply)
-	  (alternatively, 'reply' can call the 'post' method directly, which is useful inside a callback)
-*/
+// COMMANDS:
 var commands = [
 	{
 		description: "help:\t\t\t\tdisplay this message",
