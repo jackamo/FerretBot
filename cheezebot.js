@@ -55,7 +55,7 @@ stream.on('data', function(context) {
 	if (context.event == "message" && typeof context.content == "string") {
 		
 		// check if message is for CheezeBot
-		var match = context.content.match(new RegExp("^" + botName + " ([\s\S]+)", "i"));
+		var match = context.content.match(new RegExp("^" + botName + " ([\\s\\S]+)", "i"));
 		if (match) {
 			var message = match[1];
 			
