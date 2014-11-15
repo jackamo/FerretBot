@@ -195,30 +195,30 @@ var commands = [
 		description: "quote [\"{quote}\" - {quotee}]:\tquote store",
 		pattern: /^quote(?: (.+))?/,
 		reply: function(match, data) {
-			var db = dbConnect();
-			db.run("CREATE TABLE IF NOT EXISTS quote (quote TEXT)", function(error) {
-				if (error) {
-					console.error("Error creating quote table in database: " + JSON.stringify(error));
-				}
-				else if (typeof match[1] == "string") {
-					var quote = match[1].trim();
-					if (quote.match(/["“].+["”] - .+/)) {
-						db.run("INSERT INTO quote VALUES (?)", quote, function(error) {
-							if (error) console.error("Error writing quote: " + JSON.stringify(error));
-							else post("Thanks for the new quote!", data);
+			dbConnect(function(db) {
+				db.run("CREATE TABLE IF NOT EXISTS quote (quote TEXT)", function(error) {
+					if (error) {
+						console.error("Error creating quote table in database: " + JSON.stringify(error));
+					}
+					else if (typeof match[1] == "string") {
+						var quote = match[1].trim();
+						if (quote.match(/["“].+["”] - .+/)) {
+							db.run("INSERT INTO quote VALUES (?)", quote, function(error) {
+								if (error) console.error("Error writing quote: " + JSON.stringify(error));
+								else post("Thanks for the new quote!", data);
+							});
+						}
+						else post("No! Badly formatted quote!", data);
+					}
+					else {
+						db.all("SELECT * FROM quote", function(error, rows) {
+							if (error) console.error("Error reading quote: " + JSON.stringify(error));
+							else if (!rows.length) post("No quotes available.", data);
+							else post(rows[Math.floor(Math.random() * rows.length)].quote, data);
 						});
 					}
-					else post("No! Badly formatted quote!", data);
-				}
-				else {
-					db.all("SELECT * FROM quote", function(error, rows) {
-						if (error) console.error("Error reading quote: " + JSON.stringify(error));
-						else if (!rows.length) post("No quotes available.", data);
-						else post(rows[Math.floor(Math.random() * rows.length)].quote, data);
-					});
-				}
+				});
 			});
-			db.close();
 		}
 	},
 	{
@@ -295,19 +295,48 @@ var commands = [
 		}
 	},
 	{
-		description: "timer [start|stop]:\t\tstart/stop a timer",
-		pattern: /^timer(?: (start|stop))?/,
+		description: "tally {category} [{member}] [++|--|+= n|-= n]:\t\tkeep a tally",
+		pattern: /^tally (\S+)(?: ([^\s+-]*)\s*(\+\+|--|\+=\s*\d+|-=\s*\d+)?)?/,
 		reply: function(match, data) {
-			var command = match[1];
-			var time = 0;
-			if (command == "start") this.timers[data.user] = new Date().getTime();
-			else {
-				time = (new Date().getTime() - this.timers[data.user]) / 1000;
-				if (command == "stop") this.timers[data.user] = undefined;
-			}
-			return "timer: " + time + " s";
-		},
-		timers: {}
+			var category = match[1];
+			var member = match[2];
+			var command = match[3];
+			dbConnect(function(db) {
+				db.run("CREATE TABLE IF NOT EXISTS tally" +
+					"(category TEXT, member TEXT, count INT, PRIMARY KEY (category, member))", function(error) {
+					if (error) {
+						console.error("Error creating tally table in database: " + JSON.stringify(error));
+					}
+					else {
+						db.all("SELECT * FROM tally WHERE category LIKE ? AND member LIKE ?",
+							category, member || "%", function(error, rows) {
+							if (error) console.error("Error reading tally: " + JSON.stringify(error));
+							else {
+								var postTally = function(rows) {
+									var result = "";
+									for (var i = 0; i < rows.length; i++) {
+										result += "\n\t" + rows[i].member + ": " + rows[i].count;
+									}
+									post("Tally for " + category + ":" + result, data);
+								};
+								if (member) {
+									var count = rows.length ? rows[0].count : 0;
+									if (command) {
+										eval("count" + command);
+										db.run("INSERT OR REPLACE INTO tally VALUES (?, ?, ?)", category, member, count, function(error) {
+											if (error) console.error("Error updating tally: " + JSON.stringify(error));
+											else postTally([{category: category, member: member, count: count}]);
+										});
+									}
+									else postTally([{category: category, member: member, count: count}]);
+								}
+								else postTally(rows);
+							}
+						});
+					}
+				});
+			});
+		}
 	},
 	{
 		description: "roll {dice}d{sides}:\t\troll dice (eg roll 2d6)",
@@ -372,6 +401,8 @@ function email(email, data) {
 }
 
 // connect to db
-function dbConnect() {
-	return new sqlite3.Database('cheezebot.db');
+function dbConnect(callback) {
+	var db = new sqlite3.Database('cheezebot.db');
+	callback(db);
+	db.close();
 }
