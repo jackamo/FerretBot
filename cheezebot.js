@@ -2,7 +2,8 @@ var request = require('request'),
 	fs = require('fs'),
 	JSONStream = require('JSONStream'),
 	nodemailer = require('nodemailer'),
-	xml2js = require('xml2js');
+	xml2js = require('xml2js'),
+	sqlite3 = require('sqlite3').verbose();
 
 // credentials
 	// flowdock
@@ -107,21 +108,6 @@ function post(reply, data) {
 	});
 }
 
-// send an email
-function email(email, data) {
-	nodemailer.createTransport().sendMail(email, function(error, info) {
-		if (!error) {
-			var result = (info.rejected.length > 0) ? "Failed to send email" : "Email sent";
-			if (data) post(result, data);
-			else console.log(result);
-		}
-		else {
-			if (data) post("Unable to send email", data);
-			console.error("Error sending email: " + JSON.stringify(error) + "\n");
-		}
-	});
-}
-
 
 /* commands:
 each command requires:
@@ -209,25 +195,30 @@ var commands = [
 		description: "quote [\"{quote}\" - {quotee}]:\tquote store",
 		pattern: /^quote(?: (.+))?/,
 		reply: function(match, data) {
-			if (typeof match[1] == "string") {
-				var quote = match[1].trim();
-				if (quote.match(/["“].+["”] - .+/)) {
-					fs.appendFile("quotes.txt", quote + "\n", function(error) {
-						if (!error) post("Thanks for the new quote!", data);
-						else console.error("Error writing quote: " + JSON.stringify(error));
+			var db = dbConnect();
+			db.run("CREATE TABLE IF NOT EXISTS quote (quote TEXT)", function(error) {
+				if (error) {
+					console.error("Error creating quote table in database: " + JSON.stringify(error));
+				}
+				else if (typeof match[1] == "string") {
+					var quote = match[1].trim();
+					if (quote.match(/["“].+["”] - .+/)) {
+						db.run("INSERT INTO quote VALUES (?)", quote, function(error) {
+							if (error) console.error("Error writing quote: " + JSON.stringify(error));
+							else post("Thanks for the new quote!", data);
+						});
+					}
+					else post("No! Badly formatted quote!", data);
+				}
+				else {
+					db.all("SELECT * FROM quote", function(error, rows) {
+						if (error) console.error("Error reading quote: " + JSON.stringify(error));
+						else if (!rows.length) post("No quotes available.", data);
+						else post(rows[Math.floor(Math.random() * rows.length)].quote, data);
 					});
 				}
-				else post("No! Badly formatted quote!", data);
-			}
-			else {
-				fs.readFile("quotes.txt", {encoding: "utf8"}, function(error, quoteFile) {
-					if (!error) {
-						var quotes = quoteFile.split("\n").filter(function(x) { return !!x; });
-						post(quotes[Math.floor(Math.random() * quotes.length)], data);
-					}
-					else console.error("Error reading quote: " + JSON.stringify(error));
-				});
-			}
+			});
+			db.close();
 		}
 	},
 	{
@@ -356,8 +347,31 @@ var commands = [
 	},
 ];
 
-// utility functions
+
+// UTILITY FUNCTIONS:
+
+// pad string to length
 function pad(len, str) {
 	while (str.length < len) str += " ";
 	return str;
+}
+
+// send an email
+function email(email, data) {
+	nodemailer.createTransport().sendMail(email, function(error, info) {
+		if (!error) {
+			var result = (info.rejected.length > 0) ? "Failed to send email" : "Email sent";
+			if (data) post(result, data);
+			else console.log(result);
+		}
+		else {
+			if (data) post("Unable to send email", data);
+			console.error("Error sending email: " + JSON.stringify(error) + "\n");
+		}
+	});
+}
+
+// connect to db
+function dbConnect() {
+	return new sqlite3.Database('cheezebot.db');
 }
