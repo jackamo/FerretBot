@@ -55,7 +55,7 @@ stream.on('data', function(context) {
 	if (context.event == "message" && typeof context.content == "string") {
 		
 		// check if message is for CheezeBot
-		var match = context.content.match(new RegExp("^" + botName + " ([\\s\\S]+)", "i"));
+		var match = context.content.match(new RegExp("^\\s*" + botName + "\\s+([\\s\\S]+)", "i"));
 		if (match) {
 			var message = match[1];
 			
@@ -112,7 +112,7 @@ function post(reply, context) {
 var commands = [
 	{
 		description: "help:\t\t\t\tdisplay this message",
-		pattern: /^help/,
+		pattern: /^help/i,
 		reply: function() {
 			var help = "CheezeBot commands:";
 			for (var i = 0; i < commands.length; i++) {
@@ -124,7 +124,7 @@ var commands = [
 	},
 	{
 		description: "gif {search string}:\t\tshow a gif based on a search string",
-		pattern: /^gif (.+)/,
+		pattern: /^gif\s+(.+)/i,
 		reply: function(match, context) {
 			request(encodeURI("http://api.giphy.com/v1/gifs/search?api_key=dc6zaTOxFJmzC&limit=1&q=" + match[1]),
 				function(error, response, body) {
@@ -139,7 +139,7 @@ var commands = [
 	},
 	{
 		description: "video {search string}:\t\tshow a video based on a search string",
-		pattern: /^(?:video|youtube) (.+)/,
+		pattern: /^(?:video|youtube)\s+(.+)/i,
 		reply: function(match, context) {
 			request(encodeURI("https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=1&type=video&key=" + youtubeToken + "&q=" + match[1]),
 				function(error, response, body) {
@@ -154,7 +154,7 @@ var commands = [
 	},
 	{
 		description: "pullrequests {user}/{repo}:\tlist open pull requests",
-		pattern: /^pullrequests (.+\/.+)/,
+		pattern: /^pullrequests\s+(.+\/.+)/i,
 		reply: function(match, context) {
 			var repo = match[1].trim();
 			var domain = githubDomain ? githubDomain + "/api/v3" : "https://api.github.com";
@@ -183,7 +183,7 @@ var commands = [
 	},
 	{
 		description: "quote [\"{quote}\" - {quotee}]:\tquote store",
-		pattern: /^quote(?: (.+))?/,
+		pattern: /^quote(?:\s+(.+))?/i,
 		reply: function(match, context) {
 			dbConnect(function(db) {
 				db.run("CREATE TABLE IF NOT EXISTS quote (quote TEXT)", function(error) {
@@ -213,7 +213,7 @@ var commands = [
 	},
 	{
 		description: "weather {city}:\t\t\tweather forecast information",
-		pattern: /^weather (.+)/,
+		pattern: /^weather\s+(.+)/i,
 		reply: function(match, context) {
 			request(encodeURI("http://autocomplete.wunderground.com/aq?query=" + match[1]), function(error, response, body) {
 				if (!error && response.statusCode == 200) {
@@ -247,7 +247,7 @@ var commands = [
 	},
 	{
 		description: "wolfram {search string}:\tsearch wolfram alpha",
-		pattern: /^wolfram (.+)/,
+		pattern: /^wolfram\s+(.+)/i,
 		reply: function(match, context) {
 			request(encodeURI("http://api.wolframalpha.com/v2/query?appid=" + wolframToken + "&input=" + match[1]),
 				function(error, response, body) {
@@ -272,7 +272,7 @@ var commands = [
 	},
 	{
 		description: "email {addr} {subj} \\n {msg}:\tsend email",
-		pattern: /^email (\S+@\S+)\s+([^\n\r]+)\s+([\s\S]+)/,
+		pattern: /^email\s+(\S+@\S+)\s+([^\n\r]+)\s+([\s\S]+)/i,
 		reply: function(match, context) {
 			getUserInfo(context.user, function(user) {
 				email({
@@ -286,7 +286,7 @@ var commands = [
 	},
 	{
 		description: "tally {category} [{member}]\n\t\t[++|--|+= n|-= n]:\tkeep a tally",
-		pattern: /^tally (\S+)(?: ([^\s+-]*)\s*(\+\+|--|\+=\s*\d+|-=\s*\d+)?)?/,
+		pattern: /^tally\s+(\S+)(?:\s+([^\s+-]*)\s*(\+\+|--|\+=\s*\d+|-=\s*\d+)?)?/i,
 		reply: function(match, context) {
 			var category = match[1];
 			var member = match[2];
@@ -330,7 +330,7 @@ var commands = [
 	},
 	{
 		description: "roll {dice}d{sides}:\t\troll dice (eg roll 2d6)",
-		pattern: /^roll (\d*)d(\d+)/,
+		pattern: /^roll\s+(\d*)d(\d+)/i,
 		reply: function(match) {
 			var dice = Number(match[1]) || 1;
 			var sides = Number(match[2]);
@@ -343,7 +343,7 @@ var commands = [
 	},
 	{
 		description: "catfact:\t\t\tthankyou for signing up for cat facts",
-		pattern: /^catfact/,
+		pattern: /^catfact/i,
 		reply: function(match, context) {
 			request("http://catfacts-api.appspot.com/api/facts?number=1",
 				function(error, response, body) {
@@ -356,7 +356,7 @@ var commands = [
 	},
 	{
 		description: "about:\t\t\t\tdeveloper and source info",
-		pattern: /^about/,
+		pattern: /^about/i,
 		reply: function() {
 			return ["CheezeBot by Adam-G", "Source: git.io/1roJvQ", "Suggestions or contributions welcome.",,
 			"API Credits:", "FLOWDOCK.com/api", "WUNDERGROUND.com/weather/api", "developer.GITHUB.com/v3/",
