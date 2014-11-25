@@ -247,6 +247,7 @@ var commands = [
     description: "about:\t\t\t\tdeveloper and source info",
     pattern: /^about/i,
     reply: function() {
+      console.log("About called!");
       return ["CheezeBot by Adam-G", "Source: git.io/1roJvQ", "Suggestions or contributions welcome.",,
       "API Credits:", "FLOWDOCK.com/api", "WUNDERGROUND.com/weather/api", "developer.GITHUB.com/v3/",
       "github.com/GIPHY/giphyapi", "CATFACTS-api.appspot.com", "developers.GOOGLE.com/youtube/v3/",

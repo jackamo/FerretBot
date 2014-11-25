@@ -1,20 +1,52 @@
 0 info it worked if it ends with ok
 1 verbose cli [ 'C:\\Program Files\\nodejs\\\\node.exe',
 1 verbose cli   'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
-1 verbose cli   'install' ]
+1 verbose cli   'install',
+1 verbose cli   './ferretbot.js' ]
 2 info using npm@1.4.28
 3 info using node@v0.10.33
 4 verbose node symlink C:\Program Files\nodejs\\node.exe
-5 error install Couldn't read dependencies
-6 error package.json ENOENT, open 'C:\Dev\FerretBot\package.json'
-6 error package.json This is most likely not a problem with npm itself.
-6 error package.json npm can't find a package.json file in your current directory.
-7 error System Windows_NT 6.1.7601
-8 error command "C:\\Program Files\\nodejs\\\\node.exe" "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "install"
-9 error cwd C:\Dev\FerretBot
-10 error node -v v0.10.33
-11 error npm -v 1.4.28
-12 error path C:\Dev\FerretBot\package.json
-13 error code ENOPACKAGEJSON
-14 error errno 34
-15 verbose exit [ 34, true ]
+5 verbose cache add [ './ferretbot.js', null ]
+6 verbose cache add name=undefined spec="./ferretbot.js" args=["./ferretbot.js",null]
+7 verbose parsed url { protocol: null,
+7 verbose parsed url   slashes: null,
+7 verbose parsed url   auth: null,
+7 verbose parsed url   host: null,
+7 verbose parsed url   port: null,
+7 verbose parsed url   hostname: null,
+7 verbose parsed url   hash: null,
+7 verbose parsed url   search: null,
+7 verbose parsed url   query: null,
+7 verbose parsed url   pathname: './ferretbot.js',
+7 verbose parsed url   path: './ferretbot.js',
+7 verbose parsed url   href: './ferretbot.js' }
+8 silly lockFile 6c952161-ferretbot-js ./ferretbot.js
+9 verbose lock ./ferretbot.js C:\Users\jack.robinson\AppData\Roaming\npm-cache\6c952161-ferretbot-js.lock
+10 verbose chmod C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz 666
+11 verbose tar unpack C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz
+12 silly lockFile 9daed05c--9991611773148179-tmp-tgz-unpack tar://C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz-unpack
+13 verbose lock tar://C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz-unpack C:\Users\jack.robinson\AppData\Roaming\npm-cache\9daed05c--9991611773148179-tmp-tgz-unpack.lock
+14 silly lockFile 08b74e66-92146-0-9991611773148179-tmp-tgz tar://C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz
+15 verbose lock tar://C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz C:\Users\jack.robinson\AppData\Roaming\npm-cache\08b74e66-92146-0-9991611773148179-tmp-tgz.lock
+16 silly gunzTarPerm modes [ '777', '666' ]
+17 error not a package C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz
+18 silly lockFile 9daed05c--9991611773148179-tmp-tgz-unpack tar://C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz-unpack
+19 silly lockFile 9daed05c--9991611773148179-tmp-tgz-unpack tar://C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz-unpack
+20 silly lockFile 08b74e66-92146-0-9991611773148179-tmp-tgz tar://C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz
+21 silly lockFile 08b74e66-92146-0-9991611773148179-tmp-tgz tar://C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz
+22 silly lockFile 6c952161-ferretbot-js ./ferretbot.js
+23 silly lockFile 6c952161-ferretbot-js ./ferretbot.js
+24 error addLocal Could not install ./ferretbot.js
+25 error Error: ENOENT, open 'C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz-unpack\package.json'
+26 error If you need help, you may report this *entire* log,
+26 error including the npm and node versions, at:
+26 error     <http://github.com/npm/npm/issues>
+27 error System Windows_NT 6.1.7601
+28 error command "C:\\Program Files\\nodejs\\\\node.exe" "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "install" "./ferretbot.js"
+29 error cwd C:\Dev\FerretBot
+30 error node -v v0.10.33
+31 error npm -v 1.4.28
+32 error path C:\Users\JACK~1.ROB\AppData\Local\Temp\npm-7080-WbZBlxzf\1416888692146-0.9991611773148179\tmp.tgz-unpack\package.json
+33 error code ENOENT
+34 error errno 34
+35 verbose exit [ 34, true ]
