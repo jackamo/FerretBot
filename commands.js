@@ -1,16 +1,18 @@
 // -- Require command files here!
-about         = require("./commands/about_command.js"),
-catfact       = require("./commands/catfact_command.js"),
-email         = require("./commands/email_command.js"),
-gif           = require("./commands/gif_command.js"),
-help          = require("./commands/help_command.js"),
-pullrequests  = require("./commands/pullrequests_command.js");
-quote         = require("./commands/quote_command.js"),
-roll          = require("./commands/roll_command.js"),
-tally         = require("./commands/tally_command.js"),
-video         = require("./commands/video_command.js"),
-weather       = require("./commands/weather_command.js"),
-wolfram       = require("./commands/wolfram_command.js");
+about         = require("./commands/about.command.js"),
+catfact       = require("./commands/catfact.command.js"),
+email         = require("./commands/email.command.js"),
+gif           = require("./commands/gif.command.js"),
+help          = require("./commands/help.command.js"),
+pullrequests  = require("./commands/pullrequests.command.js");
+quote         = require("./commands/quote.command.js"),
+roll          = require("./commands/roll.command.js"),
+tally         = require("./commands/tally.command.js"),
+video         = require("./commands/video.command.js"),
+weather       = require("./commands/weather.command.js"),
+wolfram       = require("./commands/wolfram.command.js"),
+commit        = require("./commands/commit.command.js");
+
 // -- //
 
 var commands = [
@@ -26,6 +28,8 @@ var commands = [
   email.command,
   about.command,
   catfact.command,
+  commit.command,
+
 ];
 
 module.exports.commands = commands;
